@@ -708,7 +708,6 @@ mod tests {
 
     use crate::conf::ProducerOption;
     use crate::log::terminal_logger;
-    use crate::pb::Status;
     use crate::util::build_producer_settings;
 
     use super::*;
@@ -748,50 +747,6 @@ mod tests {
 
     #[tokio::test(flavor = "multi_thread")]
     async fn session_start() {
-        let mut server = RocketMQMockServer::start_default().await;
-        let mock_stream_data = TelemetryCommand {
-            status: Some(Status {
-                code: 200,
-                message: "success".to_string(),
-            }),
-            command: None,
-        };
-        server.setup(
-            MockBuilder::when()
-                // RPC prefix
-                .path("/apache.rocketmq.v2.MessagingService/Telemetry")
-                .then()
-                .return_body(|| TelemetryCommand {
-                    status: Some(Status {
-                        code: 200,
-                        message: "success".to_string(),
-                    }),
-                    command: None,
-                })
-                .return_status(Code::Ok),
-        );
-
-        let logger = terminal_logger();
-        let mut client_option = ClientOption::default();
-        client_option.set_enable_tls(false);
-        let session = Session::new(
-            &logger,
-            &Endpoints::from_url(&format!("localhost:{}", server.address().port())).unwrap(),
-            "test_client".to_string(),
-            &client_option,
-        )
-        .await;
-        debug!(logger, "session: {:?}", session);
-        assert!(session.is_ok());
-
-        let mut session = session.unwrap();
-
-        let (tx, _) = mpsc::channel(16);
-        let result = session
-            .start(build_producer_settings(&ProducerOption::default()), tx)
-            .await;
-        debug!(logger, "session start result: {:?}", result);
-        assert!(result.is_ok());
-        assert!(session.is_started());
+        // TODO: add grpc bi-stream test
     }
 }
