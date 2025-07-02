@@ -708,6 +708,7 @@ mod tests {
 
     use crate::conf::ProducerOption;
     use crate::log::terminal_logger;
+    use crate::pb::Status;
     use crate::util::build_producer_settings;
 
     use super::*;
@@ -748,11 +749,25 @@ mod tests {
     #[tokio::test(flavor = "multi_thread")]
     async fn session_start() {
         let mut server = RocketMQMockServer::start_default().await;
+        let mock_stream_data = TelemetryCommand {
+            status: Some(Status {
+                code: 200,
+                message: "success".to_string(),
+            }),
+            command: None,
+        };
         server.setup(
             MockBuilder::when()
-                //    👇 RPC prefix
+                // RPC prefix
                 .path("/apache.rocketmq.v2.MessagingService/Telemetry")
                 .then()
+                .return_body(|| TelemetryCommand {
+                    status: Some(Status {
+                        code: 200,
+                        message: "success".to_string(),
+                    }),
+                    command: None,
+                })
                 .return_status(Code::Ok),
         );
 
@@ -775,6 +790,7 @@ mod tests {
         let result = session
             .start(build_producer_settings(&ProducerOption::default()), tx)
             .await;
+        debug!(logger, "session start result: {:?}", result);
         assert!(result.is_ok());
         assert!(session.is_started());
     }
