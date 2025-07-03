@@ -21,9 +21,10 @@ jobs:
         working-directory: ./golang
         run: go test -coverprofile coverage.out
       - name: Upload to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           file: ./golang/coverage.out
           flags: golang
           fail_ci_if_error: true
           verbose: true
+          token: ${{ secrets.CODECOV_ACTION_KEY }}
